@@ -9,53 +9,64 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController {
-    @IBOutlet weak var map: MKMapView!
+class ViewController: UIViewController, MKMapViewDelegate {
+
+    @IBOutlet weak var mapView: MKMapView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        
-        
-        // mixedreality creating tiled overlays tutorial ##########
-
-        
-        //let midCoordinate:CLLocationCoordinate2D = CLLocationCoordinate2DMake(50.582345, 8.687494)
-        
-        
-        //working
-        
-        let span:MKCoordinateSpan = MKCoordinateSpanMake(0.01, 0.01)
-        let location:CLLocationCoordinate2D = CLLocationCoordinate2DMake(50.582344, 8.687493)
-        let region:MKCoordinateRegion = MKCoordinateRegionMake(location, span)
-       
-        
-        map.setRegion(region, animated: true)
-        
-        let pin = PinAnnotation(title: "Alter Friedhof", subtitle: "Audiowalk", coordinate: location)
-        
-        map.addAnnotation(pin)
-        
-        //next Pin (Roentgen) ###########################
-        
-        let locationRoentgen:CLLocationCoordinate2D = CLLocationCoordinate2DMake(50.582444, 8.687555)
-        let pin2 = PinAnnotation(title: "Konrad Röntgen", subtitle: "der mit den Strahlen", coordinate: locationRoentgen)
-        map.addAnnotation(pin2)
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        title = "Alter Friedhof"
+        configureMap()
+        configurePins()
     }
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    func configureMap() {
+        mapView.delegate = self
+        mapView.mapType = .satellite
+
+        let urlTemplate = Bundle.main.bundleURL.absoluteString + "Images/Tiles/{z}/{x}/{y}.png"
+        let overlay = TileOverlay(urlTemplate: urlTemplate)
+        overlay.canReplaceMapContent = false
+        overlay.alpha = 0.7
+        mapView.add(overlay)
+
+        recentreMap()
     }
 
+    func recentreMap() {
+        let location = CLLocationCoordinate2D(latitude: 50.582344, longitude: 8.687493)
+        let span = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        let region = MKCoordinateRegionMake(location, span)
 
+        mapView.setRegion(region, animated: true)
+        mapView.regionThatFits(region)
+    }
+
+    func configurePins() {
+/*
+         let pin = PinAnnotation(title: "Alter Friedhof", subtitle: "Audiowalk", coordinate: location)
+
+         map.addAnnotation(pin)
+
+         //next Pin (Roentgen) ###########################
+
+         let locationRoentgen:CLLocationCoordinate2D = CLLocationCoordinate2DMake(50.582444, 8.687555)
+         let pin2 = PinAnnotation(title: "Konrad Röntgen", subtitle: "der mit den Strahlen", coordinate: locationRoentgen)
+         map.addAnnotation(pin2)
+*/
+    }
+
+    // MARK: - MKMapViewDelegate
+
+    func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+        guard let tileOverlay = overlay as? TileOverlay else {
+            return MKOverlayRenderer()
+        }
+
+        let renderer = MKTileOverlayRenderer(overlay: overlay)
+        renderer.alpha = tileOverlay.alpha
+        
+        return renderer
+    }
 }
